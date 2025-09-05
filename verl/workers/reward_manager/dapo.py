@@ -74,7 +74,7 @@ class DAPORewardManager:
             valid_response_ids = response_ids[:valid_response_length]
 
             # decode
-            prompt_str = self.tokenizer.decode(valid_prompt_ids, skip_special_tokens=True)
+            prompt_str = self.tokenizer.decode(valid_prompt_ids, skip_special_tokens=False)
             response_str = self.tokenizer.decode(valid_response_ids, skip_special_tokens=True)
             eos_token = self.tokenizer.eos_token
             if response_str.endswith(eos_token):

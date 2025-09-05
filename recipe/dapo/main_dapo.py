@@ -25,7 +25,8 @@ from omegaconf import OmegaConf
 from verl.trainer.ppo.reward import get_custom_reward_fn
 
 from .dapo_ray_trainer import RayDAPOTrainer
-
+# import os
+# os.environ["RAY_MAX_REQUEST_SIZE"] = "200000000"
 
 @hydra.main(config_path="config", config_name="dapo_trainer", version_base=None)
 def main(config):
