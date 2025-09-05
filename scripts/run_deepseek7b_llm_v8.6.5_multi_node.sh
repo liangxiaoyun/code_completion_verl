@@ -1,0 +1,60 @@
+set -x
+source /data_train/liangxiaoyun/miniconda3/etc/profile.d/conda.sh
+export CUDA_HOME=/data_train/liangxiaoyun/miniconda3
+export PATH=$CUDA_HOME/bin:$PATH
+export WANDB_API_KEY="2205fe10e62e95b3f624aa1aaa18e4accd300d9e"
+
+CONFIG_PATH="/data_train/liangxiaoyun/projects/verl/examples/grpo_trainer/configs/grpo_v8.6.5.yaml"
+
+nnodes=2  # 机器数量
+nproc_per_node=8  # 每台机器上的卡数量
+MAIN_NODE_IP=10.0.8.4  # head机器的ip，可以是第一台机器的ip
+node_rank=1  # 这台机器的rank，第一台为0，剩下的依次为123
+port=65536
+
+/data_train/liangxiaoyun/miniconda3/envs/verl/bin/torchrun --standalone --nnodes=$nnodes --nproc_per_node=$nproc_per_node --node_rank=$node_rank --master_port=$port --master_addr=$MAIN_NODE_IP \
+    -m verl.trainer.main_ppo \
+    --config_path=$CONFIG_PATH
+    # algorithm.adv_estimator=grpo \
+    # data.train_files=/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000.parquet \
+    # data.val_files=/data_train/liangxiaoyun/datas/online_complete_data/compl-0719-v1.1/0724_online_2_20250717-20250719_full.parquet \
+    # data.shuffle=True \
+    # data.train_batch_size=1024 \
+    # data.max_prompt_length=8000 \
+    # data.max_response_length=256 \
+    # data.filter_overlong_prompts=True \
+    # data.truncation='error' \
+    # actor_rollout_ref.model.path=/data_fast/jiaruiyu/workstation/user_data_analysis/LLM_post_training/output/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_50k \
+    # actor_rollout_ref.actor.optim.lr=1e-6 \
+    # actor_rollout_ref.model.use_remove_padding=True \
+    # actor_rollout_ref.actor.use_dynamic_bsz=True \
+    # actor_rollout_ref.actor.optim.lr_warmup_steps=40 \
+    # actor_rollout_ref.actor.ppo_mini_batch_size=4096 \
+    # actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=256 \
+    # actor_rollout_ref.actor.fsdp_config.param_offload=True \
+    # actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
+    # actor_rollout_ref.actor.use_kl_loss=True \
+    # actor_rollout_ref.actor.kl_loss_coef=0.001 \
+    # actor_rollout_ref.actor.kl_loss_type=low_var_kl \
+    # actor_rollout_ref.actor.entropy_coeff=0 \
+    # actor_rollout_ref.model.enable_gradient_checkpointing=True \
+    # actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=256 \
+    # actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
+    # actor_rollout_ref.rollout.name=vllm \
+    # actor_rollout_ref.rollout.gpu_memory_utilization=0.6 \
+    # actor_rollout_ref.rollout.max_num_batched_tokens=16384 \
+    # actor_rollout_ref.rollout.n=5 \
+    # actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=256 \
+    # actor_rollout_ref.ref.fsdp_config.param_offload=True \
+    # algorithm.use_kl_in_reward=False \
+    # trainer.critic_warmup=0 \
+    # trainer.project_name='grpo-v8.6.5_250811' \
+    # trainer.experiment_name='deepseek_coder_7b_grpo_v8.6.5_20150813' \
+    # trainer.n_gpus_per_node=8 \
+    # trainer.nnodes=1 \
+    # trainer.save_freq=20 \
+    # trainer.test_freq=20 \
+    # trainer.logger=['console','wandb','tensorboard'] \
+    # custom_reward_function.path=/data_train/liangxiaoyun/projects/verl/verl/utils/reward_score/code_completion.py \
+    # trainer.default_local_dir=/data_large/liangxiaoyun/model_output/grpo-v8.6.5_250811 \
+    # trainer.total_epochs=4

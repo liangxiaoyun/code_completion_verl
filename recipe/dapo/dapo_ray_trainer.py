@@ -166,8 +166,32 @@ class RayDAPOTrainer(RayPPOTrainer):
 
                         new_batch.batch["token_level_scores"] = reward_tensor
 
+                        # if reward_extra_infos_dict:
+                        #     new_batch.non_tensor_batch.update({k: np.array(v) for k, v in reward_extra_infos_dict.items()})
+
+                        ###################################################
                         if reward_extra_infos_dict:
-                            new_batch.non_tensor_batch.update({k: np.array(v) for k, v in reward_extra_infos_dict.items()})
+                            # new_batch.non_tensor_batch.update({k: np.array(v) for k, v in reward_extra_infos_dict.items()})
+                            
+                            aligned_dict = {}
+                            batch_size = len(batch.batch)
+                            for key, values in reward_extra_infos_dict.items():
+                                if len(values) == 0: continue
+                                if len(values) == batch_size:
+                                    aligned_dict[key] = np.array(values)
+                                elif len(values) < batch_size:
+                                    # 使用均值填充
+                                    default_value = np.mean(values)
+                                    padded_v = np.full(batch_size, default_value)
+                                    padded_v[:len(values)] = values
+                                    aligned_dict[key] = padded_v
+                                else:
+                                    aligned_dict[key] = np.array(values[:batch_size])  # 截断多余的
+                                
+                                if key != "score" and len(values) > 0:
+                                    metrics.update({f"critic/rewards/{key}": np.mean(aligned_dict[key])})
+                            new_batch.non_tensor_batch.update(aligned_dict)
+                        ###################################################
 
                         # compute rewards. apply_kl_penalty if available
                         if self.config.algorithm.use_kl_in_reward:

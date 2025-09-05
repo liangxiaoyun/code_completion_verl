@@ -603,7 +603,7 @@ class RayPPOTrainer:
             # Store original inputs
             input_ids = test_batch.batch["input_ids"]
             # TODO: Can we keep special tokens except for padding tokens?
-            input_texts = [self.tokenizer.decode(ids, skip_special_tokens=True) for ids in input_ids]
+            input_texts = [self.tokenizer.decode(ids, skip_special_tokens=False) for ids in input_ids]
             sample_inputs.extend(input_texts)
 
             batch_keys_to_pop = ["input_ids", "attention_mask", "position_ids"]
@@ -655,9 +655,29 @@ class RayPPOTrainer:
             sample_scores.extend(scores)
 
             reward_extra_infos_dict["reward"].extend(scores)
-            if "reward_extra_info" in result:
-                for key, lst in result["reward_extra_info"].items():
-                    reward_extra_infos_dict[key].extend(lst)
+            # if "reward_extra_info" in result:
+            #     for key, lst in result["reward_extra_info"].items():
+            #         reward_extra_infos_dict[key].extend(lst)
+
+            if "reward_extra_info" in result:                
+                batch_size = len(sample_scores)
+                for key, values in result["reward_extra_info"].items():
+                    if len(values) == 0: continue
+                    if len(values) == batch_size:
+                        new_values = np.array(values)
+                    elif len(values) < batch_size:
+                        # 使用均值填充
+                        default_value = np.mean(values)
+                        padded_v = np.full(batch_size, default_value)
+                        padded_v[:len(values)] = values
+                        new_values = padded_v
+                    else:
+                        new_values = np.array(values[:batch_size])  # 截断多余的
+                    
+                    # if key != "score" and len(values) > 0:
+                    #     metrics.update({f"critic/rewards/{key}": np.mean(aligned_dict[key])})
+                    reward_extra_infos_dict[key].extend(new_values)
+
 
             data_source_lst.append(test_batch.non_tensor_batch.get("data_source", ["unknown"] * reward_tensor.shape[0]))
 
@@ -1068,7 +1088,27 @@ class RayPPOTrainer:
                         batch.batch["token_level_scores"] = reward_tensor
 
                         if reward_extra_infos_dict:
-                            batch.non_tensor_batch.update({k: np.array(v) for k, v in reward_extra_infos_dict.items()})
+                            # batch.non_tensor_batch.update({k: np.array(v) for k, v in reward_extra_infos_dict.items()})
+                            
+                            aligned_dict = {}
+                            batch_size = len(batch.batch)
+                            for key, values in reward_extra_infos_dict.items():
+                                if len(values) == 0: continue
+                                if len(values) == batch_size:
+                                    aligned_dict[key] = np.array(values)
+                                elif len(values) < batch_size:
+                                    # 使用均值填充
+                                    default_value = np.mean(values)
+                                    padded_v = np.full(batch_size, default_value)
+                                    padded_v[:len(values)] = values
+                                    aligned_dict[key] = padded_v
+                                else:
+                                    aligned_dict[key] = np.array(values[:batch_size])  # 截断多余的
+                                
+                                if key != "score" and len(values) > 0:
+                                    metrics.update({f"critic/rewards/{key}": np.mean(aligned_dict[key])})
+                            batch.non_tensor_batch.update(aligned_dict)
+
 
                         # compute rewards. apply_kl_penalty if available
                         if self.config.algorithm.use_kl_in_reward:
@@ -1113,7 +1153,7 @@ class RayPPOTrainer:
                     if rollout_data_dir:
                         with marked_timer("dump_rollout_generations", timing_raw, color="green"):
                             print(batch.batch.keys())
-                            inputs = self.tokenizer.batch_decode(batch.batch["prompts"], skip_special_tokens=True)
+                            inputs = self.tokenizer.batch_decode(batch.batch["prompts"], skip_special_tokens=False)
                             outputs = self.tokenizer.batch_decode(batch.batch["responses"], skip_special_tokens=True)
                             scores = batch.batch["token_level_scores"].sum(-1).cpu().tolist()
                             self._dump_generations(
