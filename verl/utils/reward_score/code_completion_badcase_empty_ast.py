@@ -14,6 +14,7 @@
 
 import re
 import sys
+from typing import Tuple, List
 sys.path.append('/data_train/liangxiaoyun/projects/safety')
 from badcase_detect import Evaluation
 
@@ -21,6 +22,8 @@ from difflib import SequenceMatcher
 import Levenshtein
 import jellyfish
 import math
+from tree_sitter import Node, Parser
+from tree_sitter_language_pack import get_parser
 BadcaseDetect = Evaluation(test_badcase_list=["repeat", "dirty", "redundant_space", "comment_code"])
 
 def _is_code_similar(text1, text2, similarity_threshold=0.98):
@@ -79,13 +82,106 @@ def badcase_reward(completion, ground_truth, extra_info):
             break
     return reward
 
+
+##################### BEGIN: ast error ########################
+supported_languages = {
+    "python", "go", "cpp", "c", "javascript", "typescript", "java", "scala", "kotlin"
+}
+
+
+def is_position_in_node(node: Node, position: Tuple[int, int]):
+    if position[0] < node.start_point[0] or position[0] > node.end_point[0]:
+        return False
+    if position[0] == node.start_point[0] and position[1] < node.start_point[1]:
+        return False
+    if position[0] == node.end_point[0] and position[1] > node.end_point[1]:
+        return False
+    return True
+
+
+def get_cursor_types(node: Node, position: Tuple[int, int], prev_types: List[str]) -> List[List[str]]:
+    in_node = is_position_in_node(node, position)
+    if not in_node:
+        return []
+    outputs = []
+    if node.children: # 如果有子节点，则对子节点递归获取子类型
+
+        children_outputs = []
+        for child in node.children:
+            children_outputs.extend(get_cursor_types(child, position, prev_types + [node.type]))
+
+        if children_outputs:
+            outputs.extend(children_outputs)
+        else: # 如果子节点没有输出，说明光标在当前节点内，但不在子节点内（比如空行、空格等）
+            outputs.append(prev_types + [node.type])
+    else:
+        outputs.append(prev_types + [node.type])
+
+    return outputs
+
+
+def has_ast_error(prefix: str, suffix: str, completion: str, parser: Parser) -> bool:
+    if not prefix or not suffix:
+        return False
+    # 获取补全前后代码
+    prev_code = prefix + suffix # 补全前的代码
+    next_code = prefix + completion + suffix # 补全后的代码
+    mock_next_code = prefix + completion + "a" + suffix # mock补全后的代码，添加一个a避免多数补全不完整的情况
+
+    # 获取光标位置
+    prev_prefix_lines = prefix.split("\n")
+    prev_position = (len(prev_prefix_lines) - 1, len(prev_prefix_lines[-1]))
+    next_prefix_lines = (prefix + completion).split("\n")
+    next_position = (len(next_prefix_lines) - 1, len(next_prefix_lines[-1]))
+    mock_next_position = next_position
+
+    # 获取光标所处节点类型
+    prev_root = parser.parse(prev_code.encode("utf-8")).root_node
+    prev_cursor_types = get_cursor_types(prev_root, prev_position, [])
+    next_root = parser.parse(next_code.encode("utf-8")).root_node
+    next_cursor_types = get_cursor_types(next_root, prev_position, []) + get_cursor_types(next_root, next_position, [])
+    mock_next_root = parser.parse(mock_next_code.encode("utf-8")).root_node
+    mock_next_cursor_types = get_cursor_types(mock_next_root, prev_position, []) + get_cursor_types(mock_next_root, mock_next_position, [])
+
+    error_in_prev = False
+    for node_types in prev_cursor_types:
+        if "ERROR" in node_types:
+            error_in_prev = True
+    error_in_next = False
+    for node_types in next_cursor_types:
+        if "ERROR" in node_types:
+            error_in_next = True
+    error_in_mock_next = False
+    for node_types in mock_next_cursor_types:
+        if "ERROR" in node_types:
+            error_in_mock_next = True
+
+    if (not error_in_prev) and error_in_next and error_in_mock_next:
+        return True
+
+    return False
+
+
 def ast_error_judge(completion, ground_truth, extra_info):
     reward = 1.0
     flag = False
     prompt = extra_info["question"]
     case = extract_content(prompt, special_token="v1") #language, related_content, suffix, prefix, filename
     #TODO  “语法结构正确性问题”检测grader：存在问题，reward为0，否则为1；
+    language = case["language"].lower()
+    prefix = case["prefix"]
+    suffix = case["suffix"]
+    if language not in supported_languages:
+        return reward
+    try:
+        parser = get_parser(language)
+        ast_error = has_ast_error(prefix, suffix, completion, parser)
+        if ast_error:
+            return 0.0
+    except Exception as e:
+        print(e)
     return reward
+##################### END: ast error ########################
 
 #####################badcase reward########################
 def extract_content(prompt, special_token="v1"):
