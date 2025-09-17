@@ -1,0 +1,9 @@
+working_dir: ./
+excludes: ["/.git/"]
+env_vars:
+  HYDRA_FULL_ERROR: "1"
+  TORCH_NCCL_AVOID_RECORD_STREAMS: "1"
+  VLLM_USE_V1: "1"
+  CUDA_DEVICE_MAX_CONNECTIONS: "1"
+  GLOO_SOCKET_IFNAME: "eth0"
+  WANDB_API_KEY: "2205fe10e62e95b3f624aa1aaa18e4accd300d9e"

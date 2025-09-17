@@ -1,8 +1,8 @@
 algorithm:
     adv_estimator: grpo
 data:
-    train_files: /data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000.parquet
-    val_files: /data_train/liangxiaoyun/datas/online_complete_data/compl-0719-v1.1/0724_online_2_20250717-20250719_full.parquet
+    train_files: /data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balance_sample_10000_none_2000_serious_badcase_2434.parquet
+    val_files: /data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/test_python_output.parquet
     shuffle: True
     train_batch_size: 1024
     max_prompt_length: 8000
@@ -11,7 +11,7 @@ data:
     truncation: 'error'
 actor_rollout_ref:
     model:
-        path: /data_fast/jiaruiyu/workstation/user_data_analysis/LLM_post_training/output/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_50k
+        path: /data_fast/jiaruiyu/workstation/user_data_analysis/LLM_post_training/output/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_50k_user_50k_github_from_v4.0
         use_remove_padding: True
         enable_gradient_checkpointing: True
     actor:
@@ -40,14 +40,14 @@ actor_rollout_ref:
         use_kl_in_reward: False
 trainer:
     critic_warmup: 0
-    project_name: 'grpo-v8.6.5_250811'
-    experiment_name: 'deepseek_coder_7b_grpo_v8.6.5_20150813'
+    project_name: 'code-completion-grpo-project'
+    experiment_name: 'grpo-v8.6.19_250811_multi_node'
     n_gpus_per_node: 8
     nnodes: 1
-    save_freq: 20
-    test_freq: 20
+    save_freq: 14
+    test_freq: 14
     logger: ['console','wandb','tensorboard']
-    default_local_dir: /data_large/liangxiaoyun/model_output/grpo-v8.6.5_250811
-    total_epochs: 4
+    default_local_dir: /data_large/liangxiaoyun/model_output/grpo-v8.6.19_250811_multi_node
+    total_epochs: 10
 custom_reward_function:
-    path: /data_train/liangxiaoyun/projects/verl/verl/utils/reward_score/code_completion.py
+    path: /data_train/liangxiaoyun/projects/verl/verl/utils/reward_score/code_completion_badcase_empty.py
