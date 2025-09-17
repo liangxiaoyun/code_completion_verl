@@ -174,7 +174,7 @@ class RayDAPOTrainer(RayPPOTrainer):
                             # new_batch.non_tensor_batch.update({k: np.array(v) for k, v in reward_extra_infos_dict.items()})
                             
                             aligned_dict = {}
-                            batch_size = len(batch.batch)
+                            batch_size = len(new_batch.batch)
                             for key, values in reward_extra_infos_dict.items():
                                 if len(values) == 0: continue
                                 if len(values) == batch_size:

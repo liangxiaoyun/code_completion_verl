@@ -6,59 +6,13 @@ reward_config = {
     "default": DataSourceConfig(
         name="default",
         graders=[
-            GraderConfig("levenshtein", 'levenshtein_similarity', 0.4),
-            GraderConfig("jaro_winkler", 'jaro_winkler_similarity', 0.3),
-            GraderConfig("length_similarity", 'generate_length', 0.3)
+            GraderConfig("levenshtein", 'levenshtein_similarity', 0.2),
+            GraderConfig("jaro_winkler", 'jaro_winkler_similarity', 0.2),
+            GraderConfig("length_similarity", 'generate_length', 0.2),
+            GraderConfig("combined_badcase", "badcase_detection", 0.4),
         ],
         description="通用评分配置"
     ),
-    
-    # Badcase检测配置
-    "250701-250730_serious_badcase": DataSourceConfig(
-        name="250701-250730_serious_badcase",
-        graders=[
-            GraderConfig("combined_badcase", "badcase_detection", 0.5),
-            GraderConfig("min_length", "badcase_generate_length", 0.5, params={"min_length": 1})
-        ],
-        description="Badcase检测数据"
-    ),
-    
-    # 空输出检测配置
-    "250530_250630_completion_v1_output_empty": DataSourceConfig(
-        name="250530_250630_completion_v1_output_empty",
-        graders=[
-            GraderConfig("empty", "empty", 1.0)
-        ],
-        description="空输出检测"
-    ),
-    
-    "test_python_output_empty_data": DataSourceConfig(
-        name="test_python_output_empty_data",
-        graders=[
-            GraderConfig("empty", "empty", 1.0)
-        ],
-        description="Python空输出检测"
-    ),
-    
-    # AST停止检测配置
-    "open_source_ast_stop": DataSourceConfig(
-        name="open_source_ast_stop",
-        graders=[
-            GraderConfig("ast_stop", "ast_stop", 0.5),
-            GraderConfig("length_similarity", "ast_stop_generate_length", 0.5)
-        ],
-        description="AST停止检测"
-    ),
-    
-    # AST错误检测配置
-    "250701_250831_ast_error": DataSourceConfig(
-        name="250701_250831_ast_error",
-        graders=[
-            GraderConfig("ast_error", "ast_error", 0.5),
-            GraderConfig("min_length", "ast_error_generate_length", 0.5, params={"min_length": 1})
-        ],
-        description="AST错误检测"
-    )
 }
 
 def compute_score(data_source: str, solution_str: str, ground_truth: str,
@@ -307,19 +261,7 @@ def compute_score(data_source: str, solution_str: str, ground_truth: str,
 #     matches = [re.match(pattern, content, re.DOTALL | re.MULTILINE) for content in completion_contents]
 #     return [1.0 if match else 0.0 for match in matches]
 
-# def compute_score(data_source, solution_str, ground_truth, extra_info=None):
-#     lev_weight = 0.4
-#     jaro_weight = 0.3
-#     length_weight = 0.3
-#     try:
-#         score_lev = levenshtein_similarity_reward(solution_str, ground_truth)
-#         score_jaro =  jaro_winkler_similarity_reward(solution_str, ground_truth)
-#         score_length = generate_length_reward(solution_str, ground_truth)
-#     except Exception as e:
-#         print(f"get_format_score_and_hunks failed\nerror:\n{e}\nmodel output:\n{model_output}\n=============\n")
-#         return 0.0
 
-#     return score_lev * lev_weight + score_jaro * jaro_weight + score_length * length_weight
 # def compute_score_with_badcase(data_source, solution_str, ground_truth, extra_info=None):
 #     lev_weight = 0.2
 #     jaro_weight = 0.2
@@ -336,7 +278,7 @@ def compute_score(data_source: str, solution_str: str, ground_truth: str,
 
 #     return score_lev * lev_weight + score_jaro * jaro_weight + score_length * length_weight + score_badcase * badcase_weight
 
-# def compute_score_only_badcase(data_source, solution_str, ground_truth, extra_info=None):
+# def compute_score(data_source, solution_str, ground_truth, extra_info=None):
 #     try:
 #         score_badcase = badcase_reward(solution_str, ground_truth, extra_info)
 #     except Exception as e:

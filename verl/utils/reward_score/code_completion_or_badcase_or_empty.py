@@ -38,26 +38,6 @@ reward_config = {
             GraderConfig("empty", "empty", 1.0)
         ],
         description="Python空输出检测"
-    ),
-    
-    # AST停止检测配置
-    "open_source_ast_stop": DataSourceConfig(
-        name="open_source_ast_stop",
-        graders=[
-            GraderConfig("ast_stop", "ast_stop", 0.5),
-            GraderConfig("length_similarity", "ast_stop_generate_length", 0.5)
-        ],
-        description="AST停止检测"
-    ),
-    
-    # AST错误检测配置
-    "250701_250831_ast_error": DataSourceConfig(
-        name="250701_250831_ast_error",
-        graders=[
-            GraderConfig("ast_error", "ast_error", 0.5),
-            GraderConfig("min_length", "ast_error_generate_length", 0.5, params={"min_length": 1})
-        ],
-        description="AST错误检测"
     )
 }
 
@@ -140,6 +120,8 @@ def compute_score(data_source: str, solution_str: str, ground_truth: str,
 #     return reward
 
 # def generate_length_reward(completion, ground_truth):
+#     if completion == "":
+#         return 0.0
 #     diff = abs(len(completion) - len(ground_truth))
 #     reward = math.exp(-diff)
 #     return reward
@@ -307,19 +289,7 @@ def compute_score(data_source: str, solution_str: str, ground_truth: str,
 #     matches = [re.match(pattern, content, re.DOTALL | re.MULTILINE) for content in completion_contents]
 #     return [1.0 if match else 0.0 for match in matches]
 
-# def compute_score(data_source, solution_str, ground_truth, extra_info=None):
-#     lev_weight = 0.4
-#     jaro_weight = 0.3
-#     length_weight = 0.3
-#     try:
-#         score_lev = levenshtein_similarity_reward(solution_str, ground_truth)
-#         score_jaro =  jaro_winkler_similarity_reward(solution_str, ground_truth)
-#         score_length = generate_length_reward(solution_str, ground_truth)
-#     except Exception as e:
-#         print(f"get_format_score_and_hunks failed\nerror:\n{e}\nmodel output:\n{model_output}\n=============\n")
-#         return 0.0
 
-#     return score_lev * lev_weight + score_jaro * jaro_weight + score_length * length_weight
 # def compute_score_with_badcase(data_source, solution_str, ground_truth, extra_info=None):
 #     lev_weight = 0.2
 #     jaro_weight = 0.2
@@ -336,14 +306,35 @@ def compute_score(data_source: str, solution_str: str, ground_truth: str,
 
 #     return score_lev * lev_weight + score_jaro * jaro_weight + score_length * length_weight + score_badcase * badcase_weight
 
-# def compute_score_only_badcase(data_source, solution_str, ground_truth, extra_info=None):
+# def compute_score(data_source, solution_str, ground_truth, extra_info=None):
+#     score = 0.0
 #     try:
-#         score_badcase = badcase_reward(solution_str, ground_truth, extra_info)
-#     except Exception as e:
-#         print(f"get_format_score_and_hunks failed\nerror:\n{e}\nmodel output:\n{model_output}\n=============\n")
-#         return 0.0
+#         if "data_source" in extra_info.keys() and extra_info["data_source"] == "250701-250730_serious_badcase":
+#             badcase_weight = 0.5
+#             length_weight = 0.5
+#             score_badcase = badcase_reward(solution_str, ground_truth, extra_info)
+#             score_length = float(len(solution_str) > 1)
+#             score = score_badcase * badcase_weight + score_length * length_weight
+#             # return {"score": score, "reward_extra_info":{"badcase_detection_reward": score_badcase, "badcase_generate_length_reward": score_length}}
+#             return {"score": score, "badcase_detection_reward": score_badcase, "badcase_generate_length_reward": score_length}
+#         elif "data_source" in extra_info.keys() and extra_info["data_source"] in ["250530_250630_completion_v1_output_empty", "test_python_output_empty_data"]:
+#             score = 1.0 if solution_str == "" else 0.0
+#             return {"score": score, "empty_reward": score}
+#         else:
+#             lev_weight = 0.4
+#             jaro_weight = 0.3
+#             length_weight = 0.3
+#             score_lev = levenshtein_similarity_reward(solution_str, ground_truth)
+#             score_jaro =  jaro_winkler_similarity_reward(solution_str, ground_truth)
+#             score_length = generate_length_reward(solution_str, ground_truth)
+#             score = score_lev * lev_weight + score_jaro * jaro_weight + score_length * length_weight
+#             # return {"score": score, "reward_extra_info":{"levenshtein_similarity_reward": score_lev, "jaro_winkler_similarity_reward": score_jaro, "generate_length_reward": score_length}}
+#             return {"score": score, "levenshtein_similarity_reward": score_lev, "jaro_winkler_similarity_reward": score_jaro, "generate_length_reward": score_length}
 
-#     return score_badcase
+#     except Exception as e:
+#         print(f"get_format_score_and_hunks failed\nerror:\n{e}\nmodel output:\n{solution_str}\n=============\n")
+
+#     return {"score": score}
 
 # if __name__ == "__main__":
 #     print(_lcp_space_optimized("abcde\nfg\ntl", "abcdde\nfg\ntl"))

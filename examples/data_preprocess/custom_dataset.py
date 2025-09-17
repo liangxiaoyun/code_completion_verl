@@ -21,7 +21,8 @@ import re
 import pandas as pd
 import datasets
 import random
-from datasets import Dataset, load_dataset, concatenate_datasets
+import json
+from datasets import Dataset, load_dataset, concatenate_datasets, Features, Value
 from collections import defaultdict
 from verl.utils.hdfs_io import copy, makedirs
 
@@ -287,15 +288,35 @@ def jsonl_parquet_merge_to_parquet():
     # }
     # save_parquet_file = "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_output_length_language_balance_sample_10000_none_2000.parquet"
     
-    data_list = {
-        "250530_250630_completion_v1": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balanced_sample_20000.jsonl",
-        "250530_250630_completion_v1_output_empty": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001_eos_filtered_thres_0.14_cursor_type_output_length_language_balanced_sample_2000.jsonl",
-        "250701-250730_serious_badcase": "/data_large/liangxiaoyun/data/online_complete_data/250701-250730_badcase/250701-250730_badcase_serious_train_data_balance_data_source_sample-2434.parquet"
-    }
-    save_parquet_file = "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balance_sample_20000_none_2000_serious_badcase_2434.parquet"
-    
-    
-    gt_key = "completion"
+    # data_list = {
+    #     "250530_250630_completion_v1": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balanced_sample_20000.jsonl",
+    #     "250530_250630_completion_v1_output_empty": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001_eos_filtered_thres_0.14_cursor_type_output_length_language_balanced_sample_2000.jsonl",
+    #     "250701-250730_serious_badcase": "/data_large/liangxiaoyun/data/online_complete_data/250701-250730_badcase/250701-250730_badcase_serious_train_data_balance_data_source_sample-2434.parquet"
+    # }
+    # save_parquet_file = "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balance_sample_20000_none_2000_serious_badcase_2434.parquet"
+    # gt_key = "completion"
+
+    # data_list = {
+    #     "250530_250630_completion_v1": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balanced_sample_10000.jsonl",
+    #     "250530_250630_completion_v1_output_empty": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001_eos_filtered_thres_0.14_cursor_type_output_length_language_balanced_sample_2000.jsonl",
+    #     "250701-250730_serious_badcase": "/data_large/liangxiaoyun/data/online_complete_data/250701-250730_badcase/250701-250730_badcase_serious_train_data_balance_data_source_sample-2434.parquet"
+    # }
+    # data_list_repeat_num = {
+    #     # "250701-250730_serious_badcase": 1
+    # }
+    # save_parquet_file = "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balance_sample_10000_none_2000_serious_badcase_2434.parquet"
+    # gt_key = "completion"
+
+    # data_list = {
+    #     "250530_250630_completion_v1": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balanced_sample_10000.jsonl",
+    #     "250530_250630_completion_v1_output_empty": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001_eos_filtered_thres_0.14_cursor_type_output_length_language_balanced_sample_10000.jsonl",
+    #     "250701-250730_serious_badcase": "/data_large/liangxiaoyun/data/online_complete_data/250701-250730_badcase/250701-250730_badcase_serious_train_data_balance_data_source_sample-2434.parquet"
+    # }
+    # data_list_repeat_num = {
+    #     "250701-250730_serious_badcase": 1
+    # }
+    # save_parquet_file = "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balance_sample_10000_none_10000_serious_badcase_2434-dul4.parquet"
+    # gt_key = "completion"
 
     # data_list = {
     #     "test_python_output_empty_data": "/data_fast/jiaruiyu/workstation/user_data_analysis/Completion_User_Seq_Miner/data/test_dataset/2508_05_07_python_testset/deduplicated/random_selected/labelled/output/empty.jsonl",
@@ -303,6 +324,37 @@ def jsonl_parquet_merge_to_parquet():
     # }
     # save_parquet_file = "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/test_python_output.parquet"
     # gt_key = "reference_code"
+
+    data_list = {
+        "250530_250630_completion_v1": [
+            "/data_train/liangxiaoyun/datas/online_complete_data/compl-20250820-20250906/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001-004_less_8000_filter0819_python_cursor_type_output_length_balanced_sample_10000.jsonl",
+            "/data_train/liangxiaoyun/datas/online_complete_data/compl-20250820-20250906/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001-004_less_8000_filter0819_go_cursor_type_output_length_balanced_sample_10000.jsonl",
+            "/data_train/liangxiaoyun/datas/online_complete_data/compl-20250820-20250906/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001-004_less_8000_filter0819_java_cursor_type_output_length_balanced_sample_10000.jsonl",
+            "/data_train/liangxiaoyun/datas/online_complete_data/compl-20250820-20250906/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001-004_less_8000_filter0819_cpp_c_cursor_type_output_length_balanced_sample_10000.jsonl",
+            "/data_train/liangxiaoyun/datas/online_complete_data/compl-20250820-20250906/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001-004_less_8000_filter0819_javascript_cursor_type_output_length_balanced_sample_10000.jsonl",
+            "/data_train/liangxiaoyun/datas/online_complete_data/compl-20250820-20250906/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001-004_less_8000_filter0819_typescript_cursor_type_output_length_balanced_sample_10000.jsonl",
+            "/data_train/liangxiaoyun/datas/online_complete_data/compl-20250820-20250906/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001-004_less_8000_filter0819_others_cursor_type_output_length_balanced_sample_10000.jsonl"
+            ], 
+        # "250530_250630_completion_v1_output_empty": "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001_eos_filtered_thres_0.14_cursor_type_output_length_language_balanced_sample_10000.jsonl",
+        "250530_250630_completion_v1_output_empty": [
+            "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001-006_eos_filtered_thres_0.14_cursor_type_output_length_go_balanced_sample_5000.jsonl",
+            "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001-006_eos_filtered_thres_0.14_cursor_type_output_length_python_balanced_sample_5000.jsonl",
+            "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001-006_eos_filtered_thres_0.14_cursor_type_output_length_java_balanced_sample_5000.jsonl",
+            "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001-006_eos_filtered_thres_0.14_cursor_type_output_length_javascript_balanced_sample_5000.jsonl",
+            "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001-006_eos_filtered_thres_0.14_cursor_type_output_length_typescript_balanced_sample_5000.jsonl",
+            "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001-006_eos_filtered_thres_0.14_cursor_type_output_length_cpp_c_balanced_sample_5000.jsonl",
+            "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/output_001-006_eos_filtered_thres_0.14_cursor_type_output_length_others_balanced_sample_5000.jsonl",
+        ],
+        "250701-250730_serious_badcase": "/data_large/liangxiaoyun/data/online_complete_data/250701-250730_badcase/250701-250730_badcase_serious_train_data_balance_data_source_sample-2434.parquet",
+        "250701_250831_ast_error": "/data_large_v2/liangxiaoyun/datas/online_datas/coml-07-08-ast-error-filter-dedup-final/coml-07-08-ast-error-data-dedup_1-4_inference_over_1time_sft_sp.jsonl",
+    }
+    data_list_repeat_num = {
+        "250701-250730_serious_badcase": 6,
+        "250701_250831_ast_error": 2
+    }
+    # save_parquet_file = "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balance_sample_60000_none_10000_serious_badcase_2434-dul4.parquet"
+    save_parquet_file = "/data_train/liangxiaoyun/datas/completion_sft_datas/train_data_merge_user_distillation/250530_250630_completion_v1_sp_training_0731_deduplication_0.75_5_deduplicated_001_less_8000_filter0819_cursor_type_output_length_language_balance_sample_60000_none_30000_serious_badcase_2434-dul6_ast_error_7988-dul2.parquet"
+    gt_key = "completion"
 
     def make_map_fn(split, data_source):
         def process_fn(example, idx):
@@ -333,35 +385,47 @@ def jsonl_parquet_merge_to_parquet():
         return example
 
     dataset_list = []
+    ori_dataset_length = defaultdict(int)
     dataset_length = defaultdict(int)
-    for data_source, data_path in data_list.items():
-        if data_path.endswith(".jsonl"):
-            dataset = datasets.load_dataset(
-                    "json",
-                    data_files=data_path,
-                    split="train"
-                )
-            dataset = dataset.map(function=make_map_fn("train", data_source), with_indices=True)
-    
-        else: #parquet
-            dataset = load_dataset("parquet", data_files=data_path, split="train")
-            dataset = dataset.map(lambda x: add_key(x, data_source))
+    for data_source, data_paths in data_list.items():
+        if isinstance(data_paths, str):
+            data_paths = [data_paths]
+        for data_path in data_paths:
+            print("data_path: ", data_path)
+            if data_path.endswith(".jsonl"):
+                dataset = datasets.load_dataset(
+                        "json",
+                        data_files=data_path,
+                        split="train"
+                    )
+                
+                dataset = dataset.map(function=make_map_fn("train", data_source), with_indices=True)
+        
+            else: #parquet
+                dataset = load_dataset("parquet", data_files=data_path, split="train")
+                dataset = dataset.map(lambda x: add_key(x, data_source))
 
-        # 只保留指定列
-        target_columns = ["data_source",
-                    "prompt",
-                    "ability",
-                    "reward_model",
-                    "extra_info"]  # 你想保留的列名
-        ds = dataset.select_columns(target_columns)
-        dataset_list.append(ds)
-        dataset_length[data_source] = len(ds)
-    
+            # 只保留指定列
+            target_columns = ["data_source",
+                        "prompt",
+                        "ability",
+                        "reward_model",
+                        "extra_info"]  # 你想保留的列名
+            ds = dataset.select_columns(target_columns)
+            
+            if data_source in data_list_repeat_num.keys():
+                repeat_num = data_list_repeat_num[data_source]
+            else:
+                repeat_num = 1
+            for r in range(repeat_num):
+                dataset_list.append(ds)    
+                dataset_length[data_source] += len(ds)
+            ori_dataset_length[data_source] += len(ds)
 
     # 合并
     ds_merged = concatenate_datasets(dataset_list)
     ds_merged.to_parquet(save_parquet_file)  # 保存成一个 parquet 文件
-    print("dataset_length: ", dataset_length, "final_length: ", len(ds_merged))
+    print("dataset_length: ", dataset_length, "ori_dataset_length: ", ori_dataset_length, "final_length: ", len(ds_merged))
     print("save_path: ", save_parquet_file)
 
 if __name__ == "__main__":
@@ -369,4 +433,10 @@ if __name__ == "__main__":
     # parquet_merge()
     # sft_data_balance_sample()
     jsonl_parquet_merge_to_parquet()
-    
+    # language_num = defaultdict(int)
+    # with open("/data_fast/jiaruiyu/workstation/user_data_analysis/Completion_User_Seq_Miner/data/250530_250630_completion_v1.1_sp_training_0805_empty_fim_deduplication_0.75_5/eos_filtered_thres_0.14/output_002.jsonl", "r") as f:
+    #     for line in f.readlines():
+    #         data =json.loads(line)
+    #         language_num[data["language"]] += 1
+    # sorted_language_num = dict(sorted(language_num.items(), key=lambda x: x[1], reverse=True))
+    # print(sorted_language_num)
