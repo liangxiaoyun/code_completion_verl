@@ -31,7 +31,7 @@ export PATH=$CUDA_HOME/bin:$PATH
 export WANDB_API_KEY="2205fe10e62e95b3f624aa1aaa18e4accd300d9e"
 
 project_name='code-completion-grpo-project'
-exp_name='dapo-v8.6.20_250917'
+exp_name='dapo-v8.6.20_250918'
 
 adv_estimator=grpo
 
@@ -44,9 +44,9 @@ clip_ratio_low=0.2
 clip_ratio_high=0.28
 
 max_prompt_length=8000
-max_response_length=256
+max_response_length=$((256 * 3))
 enable_overlong_buffer=True
-overlong_buffer_len=16000
+overlong_buffer_len=256
 overlong_penalty_factor=1.0
 
 loss_agg_mode="token-mean"
@@ -148,8 +148,8 @@ ray job submit --address="http://10.0.8.6:8265" \
     trainer.n_gpus_per_node=8 \
     trainer.nnodes="${NNODES}" \
     trainer.val_before_train=True \
-    trainer.test_freq=5 \
-    trainer.save_freq=5 \
+    trainer.test_freq=28 \
+    trainer.save_freq=28 \
     trainer.total_epochs=5 \
     trainer.default_local_dir="${CKPTS_DIR}" \
     custom_reward_function.path=/data_train/liangxiaoyun/projects/verl/verl/utils/reward_score/code_completion.py \
