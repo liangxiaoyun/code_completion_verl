@@ -1,0 +1,21 @@
+# working_dir: ./
+# excludes: ["/.git/"]
+# env_vars:
+#   TORCH_NCCL_AVOID_RECORD_STREAMS: "1"
+  # If you are using vllm<=0.6.3, you might need to set the following environment variable to avoid bugs:
+  # VLLM_ATTENTION_BACKEND: "XFORMERS"
+working_dir: ./
+excludes: 
+  - "*.pt"
+  - "*.pth"
+  - "*.tar"
+  - "*.zip"
+  - "data/"
+  - "__pycache__/"
+  - ".git/"
+  - "wandb/"
+env_vars:
+  TORCH_NCCL_AVOID_RECORD_STREAMS: "1"
+  CUDA_DEVICE_MAX_CONNECTIONS: "1"
+  GLOO_SOCKET_IFNAME: "eth0"
+  WANDB_API_KEY: "2205fe10e62e95b3f624aa1aaa18e4accd300d9e"
